@@ -1,0 +1,30 @@
+name: Obfuscate BPB Panel
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 1 * * *"  # 每天凌晨1点运行
+
+jobs:
+  obfuscate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5  # 设置超时限制
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download source
+        run: wget -q -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
+      
+      - name: Obfuscate (light)
+        run: |
+          npx javascript-obfuscator origin.js --output _worker.js \
+            --compact true \
+            --control-flow-flattening false \  # 禁用最耗CPU的特性
+            --string-array true \
+            --string-array-encoding 'base64'  # 比rc4更轻量
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: '🔄 Update obfuscated worker'
+          file_pattern: '_worker.js'
