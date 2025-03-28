@@ -6,12 +6,18 @@ on:
   schedule:
     - cron: "0 1 * * *"  # 每天凌晨1点运行
 
+permissions:
+  contents: write  # 明确授予写入权限
+
 jobs:
   obfuscate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true  # 保持认证信息
+        
       - name: Download source
         run: wget -q -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
       
@@ -32,7 +38,13 @@ jobs:
             --string-array-encoding base64 \
             --rename-globals true
       
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: '🔄 Update obfuscated worker'
-          file_pattern: '_worker.js'
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit and push changes
+        run: |
+          git add _worker.js
+          git commit -m "🔄 Update obfuscated worker"
+          git push
