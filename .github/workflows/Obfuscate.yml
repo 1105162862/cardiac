@@ -9,20 +9,28 @@ on:
 jobs:
   obfuscate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5  # 设置超时限制
     steps:
       - uses: actions/checkout@v4
       
       - name: Download source
         run: wget -q -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
       
-      - name: Obfuscate (light)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install obfuscator
+        run: npm install -g javascript-obfuscator
+      
+      - name: Obfuscate
         run: |
-          npx javascript-obfuscator origin.js --output _worker.js \
+          javascript-obfuscator origin.js \
+            --output _worker.js \
             --compact true \
-            --control-flow-flattening false \  # 禁用最耗CPU的特性
             --string-array true \
-            --string-array-encoding 'base64'  # 比rc4更轻量
+            --string-array-encoding base64 \
+            --rename-globals true
       
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
