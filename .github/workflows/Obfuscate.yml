@@ -4,33 +4,27 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "0 1 * * *"  # 每天凌晨1点运行
+    - cron: "0 1 * * *"
 
-permissions:
-  contents: write  # 明确授予写入权限
+permissions: write-all
 
 jobs:
   obfuscate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          persist-credentials: true  # 保持认证信息
-        
-      - name: Download source
-        run: wget -q -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
+          persist-credentials: true
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - run: wget -q -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
       
-      - name: Install obfuscator
-        run: npm install -g javascript-obfuscator
+      - run: npm install -g javascript-obfuscator
       
-      - name: Obfuscate
-        run: |
+      - run: |
           javascript-obfuscator origin.js \
             --output _worker.js \
             --compact true \
@@ -38,13 +32,9 @@ jobs:
             --string-array-encoding base64 \
             --rename-globals true
       
-      - name: Configure Git
-        run: |
+      - run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Commit and push changes
-        run: |
           git add _worker.js
           git commit -m "🔄 Update obfuscated worker"
           git push
